@@ -1,0 +1,94 @@
+global:
+  # enabled is the master enabled switch. Setting this to true or false
+  # will enable or disable all the components within this chart by default.
+  enabled: true
+  # Used to define custom react.fullname in template.
+  projectName: "wsrestdeudar2"
+  # image sets the repo,tag and pullPolicy of the project
+  image:
+    repository: "468776618910.dkr.ecr.us-east-1.amazonaws.com/restdeudaspring"
+    tag: release-0.0.9
+    pullPolicy: IfNotPresent
+
+  # Namespace where release will be deployed
+  namespace: wsrestdeudar2
+  clusterName: prod-rentas
+
+  # https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy
+  dnsPolicy: ""
+  # https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-dns-config
+  dnsConfig: ""
+
+java:
+
+  api:
+    resources: 
+      requests:
+        cpu: 1000m
+        memory: 2Gi
+      limits:
+        cpu: 1500m
+        memory: 3Gi
+
+    # commandArgs custom command argument on deployment pod template
+    # commandArgs: "java -jar server.jar"
+
+    terminationGracePeriodSeconds: 60
+    revisionHistoryLimit: 2
+
+    autoscaling:
+      enabled: true
+      minReplicas: 1
+      maxReplicas: 3
+      targetCPUUtilizationPercentage: 70
+      targetMemoryUtilizationPercentage: 70
+
+    securityContext:
+      enabled: true
+      runAsUser: 1001
+      runAsGroup: 1001
+      scc:
+        enabled : true
+
+    env: 
+      - name: RUNTIME_ENVIRONMENT
+        value: DESA
+      - name: PROXY_URL
+        value: http://proxydesa.gobiernocba.gov.ar/
+
+    envVars:
+      secretVars:
+        - name: ptax-db 
+        - name: dbcredentials-wsrestdeudar2-prod
+      configMapVars: {}
+
+
+    # volumeMounts: 
+    #   - mountPath: /tmp/DGCIT_Root_CA.crt
+    #     name: dgcit-root-ca
+    #     subPath: DGCIT_Root_CA.crt
+    
+    # extraVolumes:
+    #   - name: dgcit-root-ca
+    #     type: secret
+    #     secretName: dgcit-root-ca
+
+    ## Allowing use of ingress controllers
+    ingress:
+      enabled: true
+      className: ""
+      labels: {}
+      annotations: {}
+      hosts: 
+        - host: app-oc.rentascordoba.gob.ar
+          paths:
+            - path: /WSRestDeudaR2/
+              pathType: Prefix
+        - host: appdesa-oc.apps.prod-rentas.syc.local
+          paths:
+            - path: /WSRestDeudaR2/
+              pathType: Prefix              
+      # tls: [ ]
+      #   #  - secretName: chart-example-tls
+      #   #    hosts:
+      # #      - chart-example.local
